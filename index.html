@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Retrophonic | Tocadiscos Digital QR</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter, Space Grotesk, and Playfair for vintage luxury hi-fi look -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Tone.js for MP3 playback -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <!-- Html5Qrcode for camera barcode & QR reading on mobile -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <style>
+    :root {
+      --wood-dark: #2a1810;
+      --wood-mid: #4a2818;
+      --wood-light: #6e3d23;
+      --brass-gold: #d4af37;
+      --brass-light: #f7e28b;
+      --vinyl-black: #111112;
+      --amber-glow: #ff9d00;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #121110;
+      color: #e6e0d8;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      overflow-x: hidden;
+    }
+
+    .font-brand {
+      font-family: 'Cinzel', serif;
+      letter-spacing: 0.15em;
+    }
+
+    .font-mono-retro {
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    /* Wood grain cabinet frame */
+    .wood-cabinet {
+      background: radial-gradient(circle at 50% 20%, #4a2818 0%, #2f170d 65%, #180b06 100%);
+      box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.15),
+                  inset 0 -4px 8px rgba(0, 0, 0, 0.7),
+                  0 15px 35px rgba(0, 0, 0, 0.8),
+                  0 2px 6px rgba(0, 0, 0, 0.5);
+      border: 3px solid #6b3e21;
+    }
+
+    /* Brushed aluminum faceplate */
+    .aluminum-plate {
+      background: linear-gradient(135deg, #242426 0%, #171718 50%, #222225 100%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.15),
+                  inset 0 -2px 5px rgba(0, 0, 0, 0.8);
+    }
+
+    /* Vinyl Record styling with grooves */
+    .vinyl-grooves {
+      background: radial-gradient(circle, 
+        #0d0d0e 0%, #0d0d0e 28%,
+        #1c1c1e 29%, #111112 30%,
+        #242426 35%, #0f0f10 37%,
+        #2a2a2c 42%, #121213 44%,
+        #222225 52%, #111112 54%,
+        #28282b 62%, #101011 65%,
+        #262629 74%, #0f0f10 76%,
+        #222224 85%, #0d0d0e 88%,
+        #1c1c1e 96%, #0a0a0b 100%
+      );
+      box-shadow: 0 10px 25px rgba(0,0,0,0.8), inset 0 0 15px rgba(255, 255, 255, 0.07);
+    }
+
+    /* Vinyl sheen reflections */
+    .vinyl-grooves::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: conic-gradient(
+        from 45deg,
+        rgba(255,255,255,0.08) 0deg,
+        transparent 60deg,
+        rgba(255,255,255,0.08) 120deg,
+        transparent 180deg,
+        rgba(255,255,255,0.08) 240deg,
+        transparent 300deg,
+        rgba(255,255,255,0.08) 360deg
+      );
+      pointer-events: none;
+    }
+
+    /* Spinning record animation */
+    @keyframes spinVinyl {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .spinning-33 {
+      animation: spinVinyl 1.8s linear infinite;
+    }
+
+    .spinning-45 {
+      animation: spinVinyl 1.33s linear infinite;
+    }
+
+    .record-paused {
+      animation-play-state: paused !important;
+    }
+
+    /* Tonearm mechanical movement */
+    .tonearm-assembly {
+      transform-origin: 32px 32px;
+      transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    .tonearm-parked {
+      transform: rotate(0deg);
+    }
+
+    .tonearm-playing {
+      transform: rotate(24deg);
+    }
+
+    /* Retro amber glow effects */
+    .glow-amber {
+      box-shadow: 0 0 12px #ff9d00, inset 0 0 4px #ffbe4d;
+    }
+
+    .glow-green {
+      box-shadow: 0 0 10px #10b981;
+    }
+
+    /* Brass metallic accents */
+    .brass-metal {
+      background: linear-gradient(135deg, #f7e28b 0%, #d4af37 40%, #aa820a 100%);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.6);
+    }
+
+    /* Scanner viewfinder animation */
+    @keyframes scannerBeam {
+      0% { top: 5%; opacity: 0.2; }
+      50% { opacity: 0.9; }
+      100% { top: 92%; opacity: 0.2; }
+    }
+
+    .scan-beam {
+      animation: scannerBeam 2s ease-in-out infinite alternate;
+    }
+
+    /* Hide raw HTML5-QR elements cleanly */
+    #qr-reader video {
+      border-radius: 12px;
+      object-fit: cover;
+      width: 100% !important;
+      height: 100% !important;
+    }
+    #qr-reader {
+      border: none !important;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between items-center p-3 sm:p-6 bg-neutral-950">
+
+  <!-- Mobile Audio & Camera Unlock Overlay (Autoplay requirement) -->
+  <div id="unlock-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
+    <div class="max-w-md w-full wood-cabinet p-7 rounded-3xl border border-amber-900/60 shadow-2xl flex flex-col items-center">
+      <div class="w-20 h-20 rounded-full brass-metal flex items-center justify-center text-stone-900 text-3xl shadow-lg mb-5 animate-bounce">
+        <i class="fa-solid fa-compact-disc"></i>
+      </div>
+      <h1 class="text-2xl font-bold font-brand text-amber-300 tracking-wider mb-2">RETROPHONIC 1978</h1>
+      <p class="text-xs uppercase tracking-widest text-stone-400 font-mono-retro mb-4">Tocadiscos Óptico QR de Alta Fidelidad</p>
+      
+      <p class="text-stone-300 text-sm leading-relaxed mb-6">
+        Este tocadiscos utiliza la cámara de tu teléfono para escanear códigos QR y reproducir los archivos MP3 almacenados en la carpeta audio.
+      </p>
+
+      <div class="bg-black/50 border border-amber-500/20 rounded-xl p-3.5 w-full text-left mb-6 text-xs text-stone-300 space-y-2">
+        <div class="flex items-center gap-2 text-amber-400">
+          <i class="fa-solid fa-volume-high"></i>
+          <span class="font-semibold">Reproducción de archivos MP3</span>
+        </div>
+        <p class="text-[11px] text-stone-400">Requiere un toque inicial para activar el audio del navegador.</p>
+        <div class="flex items-center gap-2 text-emerald-400 pt-1">
+          <i class="fa-solid fa-camera"></i>
+          <span class="font-semibold">Cámara Web / Móvil</span>
+        </div>
+        <p class="text-[11px] text-stone-400">Detecta los códigos colocados frente al lente automáticamente.</p>
+      </div>
+
+      <button id="btn-unlock-power" class="w-full py-4 px-6 rounded-2xl brass-metal text-stone-950 font-bold uppercase tracking-widest text-sm shadow-xl hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-3">
+        <i class="fa-solid fa-power-off text-base"></i>
+        <span>Encender Tocadiscos</span>
+      </button>
+
+      <button id="btn-skip-camera-intro" class="mt-3 text-xs text-amber-400/80 hover:text-amber-300 underline font-mono-retro">
+        Explorar primero en modo simulación (sin cámara)
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Header -->
+  <header class="w-full max-w-xl flex items-center justify-between py-2 px-1 mb-2">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl brass-metal flex items-center justify-center text-stone-900 shadow">
+        <i class="fa-solid fa-record-vinyl text-lg"></i>
+      </div>
+      <div>
+        <h1 class="font-brand font-bold text-base text-amber-200 tracking-wider">RETROPHONIC</h1>
+        <p class="text-[10px] font-mono-retro uppercase tracking-widest text-stone-400">Hi-Fi QR Turntable Model X-78</p>
+      </div>
+    </div>
+
+    <!-- Quick action buttons -->
+    <div class="flex items-center gap-2">
+      <button id="btn-open-catalog" title="Catálogo de Melodías" class="w-9 h-9 rounded-xl bg-stone-800/80 border border-stone-700 text-amber-300 hover:bg-stone-700 flex items-center justify-center text-sm transition">
+        <i class="fa-solid fa-qrcode"></i>
+      </button>
+      <button id="btn-open-guide" title="Guía para GitHub Pages" class="w-9 h-9 rounded-xl bg-stone-800/80 border border-stone-700 text-stone-300 hover:bg-stone-700 flex items-center justify-center text-sm transition">
+        <i class="fa-solid fa-circle-question"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Turntable Cabinet -->
+  <main class="w-full max-w-xl flex-1 flex flex-col justify-center items-center">
+    
+    <div class="w-full wood-cabinet rounded-[32px] p-4 sm:p-6 relative overflow-hidden">
+      <!-- Metallic Inset Chassis -->
+      <div class="aluminum-plate rounded-[24px] p-4 relative flex flex-col items-center">
+
+        <!-- Top Status Bar & VU Meter -->
+        <div class="w-full flex items-center justify-between pb-3 border-b border-stone-800/80 mb-3 text-xs">
+          <!-- Optical Eye Status -->
+          <div class="flex items-center gap-2">
+            <span id="status-indicator" class="w-3 h-3 rounded-full bg-stone-700 border border-stone-500 transition-all"></span>
+            <span id="status-text" class="font-mono-retro text-[11px] text-stone-400 uppercase tracking-wider">Esperando encendido...</span>
+          </div>
+
+          <!-- Dual Stereo VU Level Meter -->
+          <div class="flex items-center gap-1.5 bg-black/60 px-2.5 py-1 rounded-lg border border-stone-800">
+            <span class="text-[9px] font-mono-retro text-stone-500 font-bold">L</span>
+            <div class="flex gap-0.5" id="vu-meter-l">
+              <span class="w-1.5 h-3 rounded-xs bg-stone-800"></span>
+              <span class="w-1.5 h-3 rounded-xs bg-stone-800"></span>
+              <span class="w-1.5 h-3 rounded-xs bg-stone-800"></span>
+              <span class="w-1.5 h-3 rounded-xs bg-stone-800"></span>
+              <span class="w-1.5 h-3 rounded-xs bg-stone-800"></span>
+              <span class="w-1.5 h-3 rounded-xs bg-stone-800"></span>
+            </div>
+            <span class="text-[9px] font-mono-retro text-stone-500 font-bold ml-1">R</span>
+            <div class="flex gap-0.5" id="vu-meter-r">
+              <span class="w-1.5 h-3 rounded-xs bg-stone-800"></span>
+              <span class="w-1.5 h-3 rounded-xs bg-stone-800"></span>
+              <span class="w-1.5 h-3 rounded-xs bg-stone-800"></span>
+              <span class="w-1.5 h-3 rounded-xs bg-stone-800"></span>
+              <span class="w-1.5 h-3 rounded-xs bg-stone-800"></span>
+              <span class="w-1.5 h-3 rounded-xs bg-stone-800"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Turntable Deck Area (Vinyl Platter + Tonearm) -->
+        <div class="relative w-full aspect-square max-w-[340px] sm:max-w-[380px] flex items-center justify-center my-1">
+          
+          <!-- Outer platter rim (metal) -->
+          <div class="absolute w-[95%] h-[95%] rounded-full bg-gradient-to-tr from-stone-800 via-stone-700 to-stone-900 border-2 border-stone-600/40 shadow-inner flex items-center justify-center">
+            
+            <!-- Rubber slipmat -->
+            <div class="w-[96%] h-[96%] rounded-full bg-stone-900/90 border border-stone-800 flex items-center justify-center">
+              
+              <!-- Vinyl Record -->
+              <div id="vinyl-disc" class="vinyl-grooves relative w-[94%] h-[94%] rounded-full flex items-center justify-center transition-transform record-paused">
+                
+                <!-- Center Album Label Sticker -->
+                <div id="record-label" class="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-gradient-to-tr from-amber-700 via-amber-600 to-yellow-600 border-2 border-stone-900 flex flex-col items-center justify-center p-2 text-center shadow-lg transition-colors">
+                  <!-- Spindle hole -->
+                  <div class="absolute w-3.5 h-3.5 rounded-full bg-stone-900 border border-stone-400/80 shadow-inner z-10"></div>
+                  
+                  <span id="record-side" class="text-[9px] font-bold text-amber-100 font-mono-retro tracking-widest uppercase mt-1">LADO A</span>
+                  <span id="record-title" class="text-xs font-bold text-stone-950 font-brand leading-tight mt-1 line-clamp-2 px-1">SIN DISCO</span>
+                  <span id="record-artist" class="text-[9px] text-stone-900 font-medium tracking-wide line-clamp-1 mt-0.5">Escanea un código QR</span>
+                  <span id="record-speed-indicator" class="text-[8px] font-mono-retro bg-stone-950/20 text-stone-900 px-1.5 py-0.5 rounded-full mt-1">33 RPM</span>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Mechanical Tonearm Assembly (Pivot + Arm + Needle Cartridge) -->
+          <div class="absolute right-0 top-1 w-20 h-72 pointer-events-none z-20">
+            <!-- Pivot Base (Tonearm Gimbal) -->
+            <div class="absolute right-2 top-2 w-16 h-16 rounded-full bg-gradient-to-b from-stone-700 via-stone-800 to-stone-950 border-2 border-amber-600/40 shadow-xl flex items-center justify-center">
+              <div class="w-9 h-9 rounded-full brass-metal flex items-center justify-center shadow-md">
+                <div class="w-4 h-4 rounded-full bg-stone-900 border border-amber-400"></div>
+              </div>
+            </div>
+
+            <!-- Tonearm Rod & Needle -->
+            <div id="tonearm" class="tonearm-assembly tonearm-parked absolute right-2 top-2 w-16 h-64 origin-top-center">
+              <!-- Arm Rod (Brushed Chrome/Brass) -->
+              <div class="absolute left-7 top-7 w-2 h-44 bg-gradient-to-r from-stone-300 via-stone-100 to-stone-400 rounded-full shadow-md"></div>
+              <!-- Counterweight -->
+              <div class="absolute left-5 top-1 w-6 h-5 rounded-md bg-stone-900 border border-stone-600 shadow"></div>
+              <!-- Cartridge / Stylus Head -->
+              <div class="absolute left-5 top-[182px] w-6 h-9 rounded-t-sm rounded-b-md bg-stone-900 border-t border-amber-400 shadow-lg flex flex-col items-center justify-end pb-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-sm"></span>
+                <span class="w-0.5 h-2 bg-stone-200 mt-0.5"></span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Now Playing Track Display -->
+        <div class="w-full bg-stone-950/80 rounded-2xl p-3 border border-stone-800 flex items-center justify-between gap-3 mt-3">
+          <div class="flex items-center gap-3 overflow-hidden">
+            <div id="track-art-box" class="w-11 h-11 rounded-xl bg-amber-900/30 border border-amber-700/40 flex items-center justify-center text-amber-400 text-lg flex-shrink-0">
+              <i class="fa-solid fa-music"></i>
+            </div>
+            <div class="overflow-hidden">
+              <div class="flex items-center gap-2">
+                <p id="now-title" class="text-sm font-bold text-amber-100 truncate">Ningún disco montado</p>
+                <span id="badge-code" class="text-[9px] font-mono-retro px-1.5 py-0.2 rounded bg-stone-800 text-stone-400 border border-stone-700">QR: --</span>
+              </div>
+              <p id="now-artist" class="text-xs text-stone-400 truncate">Apunta la cámara a tu código musical</p>
+            </div>
+          </div>
+
+          <!-- Stop / Needle Lift button -->
+          <button id="btn-toggle-play" class="w-10 h-10 rounded-xl bg-stone-800 border border-stone-700 text-stone-300 hover:text-amber-400 hover:border-amber-400/40 active:scale-90 flex items-center justify-center transition flex-shrink-0">
+            <i id="play-icon" class="fa-solid fa-play"></i>
+          </button>
+        </div>
+
+        <!-- Turntable Deck Controls (RPM Switch, Volume, Power) -->
+        <div class="w-full grid grid-cols-3 items-center gap-2 pt-4 mt-2 border-t border-stone-800/80">
+          
+          <!-- RPM Selector -->
+          <div class="flex flex-col items-center">
+            <span class="text-[9px] font-mono-retro text-stone-400 tracking-wider uppercase mb-1">Velocidad</span>
+            <div class="flex bg-stone-900 p-0.5 rounded-lg border border-stone-800">
+              <button id="btn-speed-33" class="px-2.5 py-1 text-xs font-mono-retro font-bold rounded-md bg-amber-500 text-stone-950 transition">33</button>
+              <button id="btn-speed-45" class="px-2.5 py-1 text-xs font-mono-retro text-stone-400 rounded-md hover:text-stone-200 transition">45</button>
+            </div>
+          </div>
+
+          <!-- Volume Rotary Slider -->
+          <div class="flex flex-col items-center">
+            <span class="text-[9px] font-mono-retro text-stone-400 tracking-wider uppercase mb-1">Volumen Master</span>
+            <div class="flex items-center gap-2 w-full max-w-[110px]">
+              <i class="fa-solid fa-volume-low text-[10px] text-stone-500"></i>
+              <input id="volume-slider" type="range" min="0" max="100" value="80" class="w-full accent-amber-500 h-1.5 bg-stone-800 rounded-lg cursor-pointer">
+              <i class="fa-solid fa-volume-high text-[10px] text-stone-400"></i>
+            </div>
+          </div>
+
+          <!-- Camera Scanner Toggle -->
+          <div class="flex flex-col items-center">
+            <span class="text-[9px] font-mono-retro text-stone-400 tracking-wider uppercase mb-1">Lector QR</span>
+            <button id="btn-toggle-camera" class="px-3 py-1 text-xs font-mono-retro font-bold rounded-lg bg-emerald-600/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-600/30 active:scale-95 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-camera text-[10px]"></i>
+              <span id="camera-state-text">Activo</span>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Camera Viewfinder Section -->
+    <div id="camera-container" class="w-full max-w-xl mt-3 transition-all duration-300">
+      <div class="bg-stone-900/90 border border-stone-800 rounded-2xl p-3 shadow-lg flex flex-col gap-2">
+        <div class="flex items-center justify-between text-xs px-1">
+          <div class="flex items-center gap-2 text-stone-300">
+            <i class="fa-solid fa-expand text-amber-400"></i>
+            <span class="font-medium text-xs">Visor de la Cámara</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btn-switch-camera" title="Cambiar cámara frontal/trasera" class="text-[11px] text-stone-400 hover:text-amber-300 px-2 py-0.5 rounded bg-stone-800 border border-stone-700 flex items-center gap-1">
+              <i class="fa-solid fa-rotate"></i>
+              <span>Girar</span>
+            </button>
+            <button id="btn-minimize-camera" class="text-stone-400 hover:text-stone-200 text-xs px-1">
+              <i class="fa-solid fa-chevron-up" id="cam-minimize-icon"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Viewport Box with Scanning Target overlay -->
+        <div id="camera-box" class="relative w-full h-44 sm:h-52 bg-black rounded-xl overflow-hidden border border-stone-800 flex items-center justify-center">
+          
+          <!-- html5-qrcode live stream attaches here -->
+          <div id="qr-reader" class="w-full h-full"></div>
+
+          <!-- Viewfinder Target Crosshairs & Scanlines -->
+          <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <!-- Target Box -->
+            <div class="relative w-36 h-36 border-2 border-dashed border-amber-400/60 rounded-xl flex items-center justify-center">
+              <div class="absolute -top-1 -left-1 w-3 h-3 border-t-2 border-l-2 border-amber-400"></div>
+              <div class="absolute -top-1 -right-1 w-3 h-3 border-t-2 border-r-2 border-amber-400"></div>
+              <div class="absolute -bottom-1 -left-1 w-3 h-3 border-b-2 border-l-2 border-amber-400"></div>
+              <div class="absolute -bottom-1 -right-1 w-3 h-3 border-b-2 border-r-2 border-amber-400"></div>
+              
+              <!-- Scan animated bar -->
+              <div class="scan-beam absolute left-2 right-2 h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent shadow-[0_0_8px_#ff9d00]"></div>
+            </div>
+          </div>
+
+          <!-- Camera Standby / Permission prompt overlay -->
+          <div id="camera-placeholder" class="absolute inset-0 bg-stone-950/95 flex flex-col items-center justify-center p-4 text-center">
+            <i class="fa-solid fa-video-slash text-stone-600 text-3xl mb-2"></i>
+            <p class="text-xs text-stone-300 font-medium">Cámara en reposo o no permitida</p>
+            <p class="text-[11px] text-stone-500 mt-1 max-w-xs">Puedes probar las melodías desde el estante de melodías o desde el catálogo.</p>
+            <button id="btn-force-start-cam" class="mt-3 px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-amber-300 text-xs font-semibold border border-stone-700">
+              Reintentar acceso a cámara
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Interactive Vinyl Shelf (Allows testing without physical QR codes) -->
+    <div class="w-full max-w-xl mt-3 mb-4">
+      <div class="flex items-center justify-between text-xs px-1 mb-2">
+        <span class="text-stone-400 font-mono-retro tracking-wider uppercase text-[10px]">
+          <i class="fa-solid fa-box-archive mr-1 text-amber-500"></i> Estante de Melodías
+        </span>
+        <span class="text-[10px] text-stone-500">Toca una para probar sin cámara</span>
+      </div>
+
+      <!-- Disc quick selectors row -->
+      <div id="vinyl-shelf" class="grid grid-cols-4 gap-2">
+        <!-- Rendered dynamically via JavaScript -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="w-full max-w-xl text-center py-2 text-[10px] text-stone-600 font-mono-retro">
+    <span>RETROPHONIC STEREO LABS &bull; CREADO PARA GITHUB PAGES</span>
+  </footer>
+
+  <!-- MODAL: Melody Catalog -->
+  <div id="modal-catalog" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden flex-col items-center justify-center p-4">
+    <div class="max-w-lg w-full bg-stone-900 border border-stone-800 rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh]">
+      <div class="flex items-center justify-between pb-3 border-b border-stone-800">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-music text-amber-400 text-lg"></i>
+          <div>
+            <h2 class="text-sm font-bold text-amber-200">Catálogo de Melodías</h2>
+            <p class="text-[10px] text-stone-400">Prueba cualquiera de las melodías disponibles</p>
+          </div>
+        </div>
+        <button id="btn-close-catalog" class="w-8 h-8 rounded-full bg-stone-800 text-stone-400 hover:text-stone-100 flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div id="catalog-items-list" class="flex-1 overflow-y-auto py-3 space-y-2 pr-1"></div>
+      <div class="pt-3 border-t border-stone-800 text-[10px] text-stone-500 font-mono-retro">
+        Los códigos QR reales son externos a esta aplicación. Cada QR debe contener únicamente
+        <code>melodia_01</code> hasta <code>melodia_10</code>.
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: GitHub Pages & Camera Permissions Guide -->
+  <div id="modal-guide" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden flex-col items-center justify-center p-4">
+    <div class="max-w-md w-full bg-stone-900 border border-stone-800 rounded-3xl p-6 shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto">
+      
+      <div class="flex items-center justify-between pb-3 border-b border-stone-800 mb-4">
+        <div class="flex items-center gap-2">
+          <i class="fa-brands fa-github text-stone-200 text-xl"></i>
+          <h2 class="text-sm font-bold text-stone-100">Guía de Montaje en GitHub Pages</h2>
+        </div>
+        <button id="btn-close-guide" class="w-8 h-8 rounded-full bg-stone-800 text-stone-400 hover:text-stone-100 flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs text-stone-300 leading-relaxed">
+        <div class="bg-amber-950/30 border border-amber-700/40 rounded-xl p-3">
+          <p class="font-bold text-amber-300 text-xs mb-1">
+            <i class="fa-solid fa-lock mr-1"></i> ¿Por qué la cámara funciona en GitHub Pages?
+          </p>
+          <p class="text-[11px] text-stone-300">
+            Los celulares modernos (iOS Safari y Android Chrome) **bloquean la cámara** a menos que la página esté bajo <code>https://</code> seguro. <strong>GitHub Pages ofrece HTTPS gratuito automáticamente</strong>, por lo que tus usuarios solo deben presionar "Permitir" cuando el navegador pregunte.
+          </p>
+        </div>
+
+        <div>
+          <h3 class="font-bold text-stone-200 mb-1 flex items-center gap-1.5">
+            <span class="w-5 h-5 rounded-full bg-stone-800 text-amber-400 flex items-center justify-center text-[10px]">1</span>
+            Crear el Repositorio en GitHub
+          </h3>
+          <p class="text-stone-400 pl-6 text-[11px]">
+            Crea un repositorio público (ej: <code>mi-tocadiscos-digital</code>) y sube este archivo con el nombre <code>index.html</code>.
+          </p>
+        </div>
+
+        <div>
+          <h3 class="font-bold text-stone-200 mb-1 flex items-center gap-1.5">
+            <span class="w-5 h-5 rounded-full bg-stone-800 text-amber-400 flex items-center justify-center text-[10px]">2</span>
+            Activar GitHub Pages
+          </h3>
+          <p class="text-stone-400 pl-6 text-[11px]">
+            Ve a <strong>Settings &rarr; Pages</strong> en tu repositorio. En <em>Branch</em>, selecciona <code>main</code> (o <code>master</code>) y presiona <strong>Save</strong>. En 1 minuto tendrás tu enlace <code>https://tu-usuario.github.io/mi-tocadiscos-digital/</code>.
+          </p>
+        </div>
+
+        <div>
+          <h3 class="font-bold text-stone-200 mb-1 flex items-center gap-1.5">
+            <span class="w-5 h-5 rounded-full bg-stone-800 text-amber-400 flex items-center justify-center text-[10px]">3</span>
+            Usar tus propias canciones MP3
+          </h3>
+          <p class="text-stone-400 pl-6 text-[11px]">
+            Puedes crear una carpeta llamada <code>musica/</code> en GitHub, subir tus canciones (<code>cancion1.mp3</code>) y mapearlas en el formulario "Crear Nuevo Disco" usando la ruta <code>./musica/cancion1.mp3</code>.
+          </p>
+        </div>
+      </div>
+
+      <button id="btn-guide-ok" class="mt-5 w-full py-2.5 rounded-xl brass-metal text-stone-950 font-bold text-xs">
+        ¡Entendido!
+      </button>
+
+    </div>
+  </div>
+
+  <script>
+    /*
+     * RETROPHONIC DIGITAL TURNTABLE
+     *
+     * QR format:
+     *   melodia_01
+     *   melodia_02
+     *   ...
+     *   melodia_10
+     *
+     * Audio files:
+     *   ./audio/melodia_01.mp3
+     *   ./audio/melodia_02.mp3
+     *   ...
+     *   ./audio/melodia_10.mp3
+     *
+     * The QR scanner uses the text read from the QR directly as the
+     * filename identifier. No QR generation, synthetic melodies,
+     * random songs or localStorage database are used.
+     */
+
+    const MELODIES = Array.from({ length: 10 }, (_, index) => {
+      const number = String(index + 1).padStart(2, "0");
+      return {
+        id: `melodia_${number}`,
+        title: `Melodía ${number}`,
+        artist: "Colección Retrophonic",
+        audio: `./audio/melodia_${number}.mp3`,
+        rpm: 33,
+        side: "LADO A",
+        color: [
+          "from-amber-700 to-yellow-600",
+          "from-rose-800 to-red-600",
+          "from-emerald-800 to-teal-600",
+          "from-sky-800 to-indigo-600",
+          "from-purple-800 to-fuchsia-600"
+        ][index % 5]
+      };
+    });
+
+    let currentDisc = null;
+    let isPlaying = false;
+    let currentSpeed = 33;
+    let currentFacingMode = "environment";
+    let html5QrScanner = null;
+    let isCameraRunning = false;
+    let lastScannedCode = null;
+    let scanCooldown = false;
+
+    let masterGain = null;
+    let activeTonePlayer = null;
+    let vuMeterMeter = null;
+    let vuInterval = null;
+
+    function findMelody(code) {
+      const cleanCode = code.trim().toLowerCase();
+      return MELODIES.find(melody => melody.id.toLowerCase() === cleanCode) || null;
+    }
+
+    async function initAudioEngine() {
+      await Tone.start();
+
+      if (masterGain) return;
+
+      const compressor = new Tone.Compressor({
+        threshold: -18,
+        ratio: 3.5,
+        attack: 0.05,
+        release: 0.25
+      }).toDestination();
+
+      masterGain = new Tone.Gain(0.8).connect(compressor);
+
+      const slider = document.getElementById("volume-slider");
+      slider.addEventListener("input", (event) => {
+        if (masterGain) {
+          masterGain.gain.rampTo(Number(event.target.value) / 100, 0.05);
+        }
+      });
+
+      vuMeterMeter = new Tone.Meter({
+        normalRange: true,
+        smoothing: 0.8
+      });
+
+      masterGain.connect(vuMeterMeter);
+      startVuLoop();
+    }
+
+    async function playAudioFile(melody) {
+      stopCurrentMusic();
+
+      if (!masterGain) {
+        await initAudioEngine();
+      }
+
+      try {
+        activeTonePlayer = new Tone.Player({
+          url: melody.audio,
+          loop: false,
+          autostart: false,
+          onload: () => {
+            if (!isPlaying || currentDisc !== melody) return;
+            activeTonePlayer.start();
+            updateStatus(`Reproduciendo: ${melody.title}`, "active");
+          },
+          onstop: () => {
+            if (currentDisc === melody && isPlaying) {
+              isPlaying = false;
+              updateTurntableVisuals(false);
+              updateStatus("Reproducción terminada", "idle");
+            }
+          },
+          onerror: () => {
+            isPlaying = false;
+            updateTurntableVisuals(false);
+            updateStatus(`No se encontró ${melody.audio}`, "error");
+            showToast(`No se pudo cargar ${melody.audio}`, "error");
+          }
+        }).connect(masterGain);
+
+      } catch (error) {
+        console.error("Error al cargar el audio:", error);
+        isPlaying = false;
+        updateTurntableVisuals(false);
+        updateStatus(`Error al cargar ${melody.audio}`, "error");
+        showToast("Error al cargar la melodía.", "error");
+      }
+    }
+
+    function stopCurrentMusic() {
+      try {
+        if (activeTonePlayer) {
+          activeTonePlayer.stop();
+          activeTonePlayer.dispose();
+          activeTonePlayer = null;
+        }
+      } catch (error) {
+        console.warn("Error al detener audio:", error);
+      }
+    }
+
+    function mountAndPlayDisc(melody) {
+      if (!melody) return;
+
+      currentDisc = melody;
+
+      document.getElementById("record-title").innerText = melody.title;
+      document.getElementById("record-artist").innerText = melody.artist;
+      document.getElementById("record-side").innerText = melody.side;
+      document.getElementById("record-speed-indicator").innerText = `${melody.rpm} RPM`;
+
+      document.getElementById("record-label").className =
+        `relative w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-gradient-to-tr ${melody.color} border-2 border-stone-900 flex flex-col items-center justify-center p-2 text-center shadow-lg transition-colors`;
+
+      document.getElementById("now-title").innerText = melody.title;
+      document.getElementById("now-artist").innerText = melody.artist;
+      document.getElementById("badge-code").innerText = `QR: ${melody.id}`;
+
+      setSpeed(melody.rpm);
+      startPlayback();
+    }
+
+    async function startPlayback() {
+      if (!currentDisc) return;
+
+      isPlaying = true;
+      updateTurntableVisuals(true);
+      playNeedleDropSound();
+
+      await playAudioFile(currentDisc);
+    }
+
+    function pausePlayback() {
+      isPlaying = false;
+      stopCurrentMusic();
+      updateTurntableVisuals(false);
+      updateStatus("Tocadiscos en pausa", "idle");
+    }
+
+    function togglePlayback() {
+      if (!currentDisc) {
+        showToast("Primero escanea un código QR.", "info");
+        return;
+      }
+
+      if (isPlaying) {
+        pausePlayback();
+      } else {
+        startPlayback();
+      }
+    }
+
+    function updateTurntableVisuals(playing) {
+      const vinylDisc = document.getElementById("vinyl-disc");
+      const tonearm = document.getElementById("tonearm");
+      const playIcon = document.getElementById("play-icon");
+
+      vinylDisc.classList.remove("spinning-33", "spinning-45", "record-paused");
+
+      if (playing) {
+        vinylDisc.classList.add(currentSpeed === 45 ? "spinning-45" : "spinning-33");
+        tonearm.classList.remove("tonearm-parked");
+        tonearm.classList.add("tonearm-playing");
+        playIcon.classList.remove("fa-play");
+        playIcon.classList.add("fa-pause");
+      } else {
+        vinylDisc.classList.add("record-paused");
+        tonearm.classList.remove("tonearm-playing");
+        tonearm.classList.add("tonearm-parked");
+        playIcon.classList.remove("fa-pause");
+        playIcon.classList.add("fa-play");
+      }
+    }
+
+    function setSpeed(speed) {
+      currentSpeed = speed;
+
+      const btn33 = document.getElementById("btn-speed-33");
+      const btn45 = document.getElementById("btn-speed-45");
+
+      if (speed === 33) {
+        btn33.className = "px-2.5 py-1 text-xs font-mono-retro font-bold rounded-md bg-amber-500 text-stone-950 transition";
+        btn45.className = "px-2.5 py-1 text-xs font-mono-retro text-stone-400 rounded-md hover:text-stone-200 transition";
+      } else {
+        btn45.className = "px-2.5 py-1 text-xs font-mono-retro font-bold rounded-md bg-amber-500 text-stone-950 transition";
+        btn33.className = "px-2.5 py-1 text-xs font-mono-retro text-stone-400 rounded-md hover:text-stone-200 transition";
+      }
+
+      const vinylDisc = document.getElementById("vinyl-disc");
+      if (isPlaying) {
+        vinylDisc.classList.remove("spinning-33", "spinning-45");
+        vinylDisc.classList.add(speed === 45 ? "spinning-45" : "spinning-33");
+      }
+    }
+
+    function playNeedleDropSound() {
+      if (!masterGain) return;
+
+      try {
+        const scratchNoise = new Tone.NoiseSynth({
+          noise: { type: "white" },
+          envelope: {
+            attack: 0.005,
+            decay: 0.12,
+            sustain: 0
+          }
+        }).connect(masterGain);
+
+        scratchNoise.triggerAttackRelease("16n");
+
+        setTimeout(() => {
+          try { scratchNoise.dispose(); } catch (e) {}
+        }, 300);
+      } catch (error) {
+        console.warn("Needle drop effect:", error);
+      }
+    }
+
+    async function startCameraScanner() {
+      const placeholder = document.getElementById("camera-placeholder");
+      const cameraStateText = document.getElementById("camera-state-text");
+      const button = document.getElementById("btn-toggle-camera");
+
+      try {
+        if (html5QrScanner) {
+          try { await html5QrScanner.stop(); } catch (e) {}
+          html5QrScanner.clear();
+        }
+
+        html5QrScanner = new Html5Qrcode("qr-reader");
+
+        await html5QrScanner.start(
+          { facingMode: currentFacingMode },
+          {
+            fps: 15,
+            qrbox: { width: 220, height: 220 },
+            aspectRatio: 1.0
+          },
+          onScanSuccess,
+          onScanError
+        );
+
+        placeholder.classList.add("hidden");
+        isCameraRunning = true;
+        cameraStateText.innerText = "Activo";
+        button.className = "px-3 py-1 text-xs font-mono-retro font-bold rounded-lg bg-emerald-600/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-600/30 active:scale-95 transition flex items-center gap-1.5";
+        updateStatus("Cámara lista. Apunta a un código QR.", "idle");
+
+      } catch (error) {
+        console.warn("Camera initialization error:", error);
+        placeholder.classList.remove("hidden");
+        isCameraRunning = false;
+        cameraStateText.innerText = "Pausado";
+        button.className = "px-3 py-1 text-xs font-mono-retro font-bold rounded-lg bg-stone-800 text-stone-400 border border-stone-700 flex items-center gap-1.5";
+        updateStatus("Cámara no disponible.", "error");
+      }
+    }
+
+    async function stopCameraScanner() {
+      if (!html5QrScanner || !isCameraRunning) return;
+
+      try {
+        await html5QrScanner.stop();
+        html5QrScanner.clear();
+      } catch (error) {
+        console.warn("Error al detener cámara:", error);
+      }
+
+      isCameraRunning = false;
+      document.getElementById("camera-placeholder").classList.remove("hidden");
+      document.getElementById("camera-state-text").innerText = "Apagado";
+      updateStatus("Cámara desactivada", "idle");
+    }
+
+    function onScanSuccess(decodedText) {
+      if (scanCooldown) return;
+
+      const cleanCode = decodedText.trim();
+
+      if (cleanCode === lastScannedCode && isPlaying) return;
+
+      scanCooldown = true;
+      setTimeout(() => {
+        scanCooldown = false;
+      }, 2500);
+
+      lastScannedCode = cleanCode;
+
+      const melody = findMelody(cleanCode);
+
+      if (!melody) {
+        pausePlayback();
+        updateStatus(`QR no reconocido: ${cleanCode}`, "error");
+        showToast(`No existe una melodía para "${cleanCode}".`, "error");
+        return;
+      }
+
+      showToast(`Melodía detectada: ${melody.id}`, "success");
+      mountAndPlayDisc(melody);
+    }
+
+    function onScanError() {
+      // La falta de detección en cada frame es normal y se ignora.
+    }
+
+    function startVuLoop() {
+      const barsL = document.querySelectorAll("#vu-meter-l span");
+      const barsR = document.querySelectorAll("#vu-meter-r span");
+
+      if (vuInterval) clearInterval(vuInterval);
+
+      vuInterval = setInterval(() => {
+        if (!isPlaying || !vuMeterMeter) {
+          barsL.forEach(bar => bar.className = "w-1.5 h-3 rounded-xs bg-stone-800");
+          barsR.forEach(bar => bar.className = "w-1.5 h-3 rounded-xs bg-stone-800");
+          return;
+        }
+
+        const rawLevel = vuMeterMeter.getValue();
+        const normalized = Math.max(0, Math.min(1, rawLevel));
+        const activeCount = Math.max(1, Math.min(6, Math.round(normalized * 7)));
+
+        barsL.forEach((bar, index) => {
+          bar.className = index < activeCount
+            ? (index >= 4
+              ? "w-1.5 h-3 rounded-xs bg-amber-500 glow-amber"
+              : "w-1.5 h-3 rounded-xs bg-emerald-500")
+            : "w-1.5 h-3 rounded-xs bg-stone-800";
+        });
+
+        const rightCount = Math.max(
+          1,
+          Math.min(6, activeCount + (Math.random() > 0.5 ? 0 : -1))
+        );
+
+        barsR.forEach((bar, index) => {
+          bar.className = index < rightCount
+            ? (index >= 4
+              ? "w-1.5 h-3 rounded-xs bg-amber-500 glow-amber"
+              : "w-1.5 h-3 rounded-xs bg-emerald-500")
+            : "w-1.5 h-3 rounded-xs bg-stone-800";
+        });
+      }, 100);
+    }
+
+    function updateStatus(text, state = "idle") {
+      const indicator = document.getElementById("status-indicator");
+      const label = document.getElementById("status-text");
+
+      label.innerText = text;
+
+      if (state === "active") {
+        indicator.className = "w-3 h-3 rounded-full bg-emerald-500 glow-green transition-all";
+      } else if (state === "error") {
+        indicator.className = "w-3 h-3 rounded-full bg-rose-500 transition-all";
+      } else {
+        indicator.className = "w-3 h-3 rounded-full bg-amber-500/70 transition-all";
+      }
+    }
+
+    function renderShelf() {
+      const shelf = document.getElementById("vinyl-shelf");
+      shelf.innerHTML = "";
+
+      MELODIES.forEach((melody) => {
+        const item = document.createElement("button");
+
+        item.className =
+          "bg-stone-900 border border-stone-800 hover:border-amber-500/50 p-2 rounded-xl flex flex-col items-center text-center transition active:scale-95";
+
+        item.innerHTML = `
+          <div class="w-10 h-10 rounded-full bg-gradient-to-tr ${melody.color} border border-stone-950 flex items-center justify-center shadow-md mb-1.5">
+            <div class="w-2.5 h-2.5 rounded-full bg-stone-950"></div>
+          </div>
+          <span class="text-[11px] font-bold text-stone-200 truncate w-full">${melody.title}</span>
+          <span class="text-[9px] font-mono-retro text-amber-400/80 truncate w-full">${melody.id}</span>
+        `;
+
+        item.addEventListener("click", async () => {
+          if (!masterGain) await initAudioEngine();
+          mountAndPlayDisc(melody);
+          showToast(`Cargando ${melody.id}`, "info");
+        });
+
+        shelf.appendChild(item);
+      });
+    }
+
+    function renderCatalogModal() {
+      const list = document.getElementById("catalog-items-list");
+      list.innerHTML = "";
+
+      MELODIES.forEach((melody) => {
+        const row = document.createElement("div");
+
+        row.className =
+          "bg-stone-950 border border-stone-800 rounded-2xl p-3 flex items-center justify-between gap-3";
+
+        row.innerHTML = `
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-12 h-12 rounded-full bg-gradient-to-tr ${melody.color} border border-stone-950 flex items-center justify-center shadow-md flex-shrink-0">
+              <div class="w-2.5 h-2.5 rounded-full bg-stone-950"></div>
+            </div>
+            <div class="min-w-0">
+              <h3 class="text-xs font-bold text-amber-200">${melody.title}</h3>
+              <p class="text-[10px] text-stone-400 truncate">${melody.audio}</p>
+              <span class="text-[9px] font-mono-retro text-amber-400">QR: ${melody.id}</span>
+            </div>
+          </div>
+          <button class="btn-play-from-modal px-3 py-1.5 rounded-xl bg-stone-800 hover:bg-amber-500 hover:text-stone-950 text-stone-300 text-xs font-bold transition flex-shrink-0">
+            Probar
+          </button>
+        `;
+
+        row.querySelector(".btn-play-from-modal").addEventListener("click", async () => {
+          if (!masterGain) await initAudioEngine();
+          document.getElementById("modal-catalog").classList.add("hidden");
+          document.getElementById("modal-catalog").classList.remove("flex");
+          mountAndPlayDisc(melody);
+        });
+
+        list.appendChild(row);
+      });
+    }
+
+    function showToast(message, type = "info") {
+      const existing = document.getElementById("retro-toast");
+      if (existing) existing.remove();
+
+      const toast = document.createElement("div");
+      toast.id = "retro-toast";
+
+      const success = type === "success";
+      const error = type === "error";
+
+      toast.className =
+        `fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl text-xs font-medium shadow-2xl transition-all duration-300 flex items-center gap-2 border ${
+          success
+            ? "bg-emerald-950 text-emerald-200 border-emerald-700"
+            : error
+              ? "bg-rose-950 text-rose-200 border-rose-700"
+              : "bg-stone-900 text-amber-200 border-amber-600/50"
+        }`;
+
+      toast.innerHTML = `
+        <i class="fa-solid ${
+          success
+            ? "fa-circle-check text-emerald-400"
+            : error
+              ? "fa-circle-exclamation text-rose-400"
+              : "fa-circle-info text-amber-400"
+        }"></i>
+        <span>${message}</span>
+      `;
+
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        setTimeout(() => toast.remove(), 300);
+      }, 3200);
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      renderShelf();
+
+      const unlockBtn = document.getElementById("btn-unlock-power");
+      const unlockModal = document.getElementById("unlock-modal");
+      const skipIntroBtn = document.getElementById("btn-skip-camera-intro");
+
+      unlockBtn.addEventListener("click", async () => {
+        unlockModal.classList.add("hidden");
+        await initAudioEngine();
+        await startCameraScanner();
+        updateStatus("Cámara lista. Escanea un QR.", "idle");
+      });
+
+      skipIntroBtn.addEventListener("click", async () => {
+        unlockModal.classList.add("hidden");
+        await initAudioEngine();
+        updateStatus("Modo simulación activo.", "idle");
+      });
+
+      document.getElementById("btn-toggle-play")
+        .addEventListener("click", togglePlayback);
+
+      document.getElementById("btn-speed-33")
+        .addEventListener("click", () => setSpeed(33));
+
+      document.getElementById("btn-speed-45")
+        .addEventListener("click", () => setSpeed(45));
+
+      document.getElementById("btn-toggle-camera")
+        .addEventListener("click", async () => {
+          if (isCameraRunning) {
+            await stopCameraScanner();
+          } else {
+            await startCameraScanner();
+          }
+        });
+
+      document.getElementById("btn-switch-camera")
+        .addEventListener("click", async () => {
+          currentFacingMode =
+            currentFacingMode === "environment" ? "user" : "environment";
+
+          await startCameraScanner();
+
+          showToast(
+            `Cámara: ${currentFacingMode === "environment" ? "Trasera" : "Frontal"}`
+          );
+        });
+
+      document.getElementById("btn-force-start-cam")
+        .addEventListener("click", startCameraScanner);
+
+      const btnMinCam = document.getElementById("btn-minimize-camera");
+      const cameraBox = document.getElementById("camera-box");
+      const camIcon = document.getElementById("cam-minimize-icon");
+
+      btnMinCam.addEventListener("click", () => {
+        cameraBox.classList.toggle("hidden");
+        camIcon.classList.toggle("fa-chevron-down");
+        camIcon.classList.toggle("fa-chevron-up");
+      });
+
+      const modalCatalog = document.getElementById("modal-catalog");
+
+      document.getElementById("btn-open-catalog")
+        .addEventListener("click", () => {
+          renderCatalogModal();
+          modalCatalog.classList.remove("hidden");
+          modalCatalog.classList.add("flex");
+        });
+
+      document.getElementById("btn-close-catalog")
+        .addEventListener("click", () => {
+          modalCatalog.classList.add("hidden");
+          modalCatalog.classList.remove("flex");
+        });
+
+      const modalGuide = document.getElementById("modal-guide");
+
+      document.getElementById("btn-open-guide")
+        .addEventListener("click", () => {
+          modalGuide.classList.remove("hidden");
+          modalGuide.classList.add("flex");
+        });
+
+      document.getElementById("btn-close-guide")
+        .addEventListener("click", () => {
+          modalGuide.classList.add("hidden");
+          modalGuide.classList.remove("flex");
+        });
+
+      document.getElementById("btn-guide-ok")
+        .addEventListener("click", () => {
+          modalGuide.classList.add("hidden");
+          modalGuide.classList.remove("flex");
+        });
+    });
+  </script>
+</body>
+</html>
