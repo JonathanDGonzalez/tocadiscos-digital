@@ -1,6 +1,6 @@
 # 🎵 Retrophonic Digital Turntable
 
-Tocadiscos digital interactivo basado en **códigos QR**, desarrollado como proyecto académico. El sistema utiliza la cámara del dispositivo para leer un código QR y reproducir automáticamente la melodía asociada desde archivos MP3 almacenados en el repositorio.
+Tocadiscos digital interactivo basado en **códigos QR**, desarrollado como proyecto académico. El sistema utiliza la cámara del dispositivo para leer una imagen y reproducir automáticamente la melodía asociada desde archivos MP3 almacenados en el repositorio.
 
 ## 📌 Descripción
 
